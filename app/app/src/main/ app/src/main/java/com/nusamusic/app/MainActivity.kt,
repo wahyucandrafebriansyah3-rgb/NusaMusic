@@ -1,0 +1,142 @@
+package com.nusamusic.app
+
+import android.app.Activity
+import android.os.Bundle
+import android.graphics.Color
+import android.content.res.ColorStateList
+import android.view.Gravity
+import android.widget.*
+import android.view.ViewGroup
+import android.net.Uri
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
+
+class MainActivity : Activity() {
+
+    private var player: ExoPlayer? = null
+
+    private val purple = Color.rgb(190, 70, 255)
+    private val dark = Color.rgb(15, 12, 22)
+    private val white = Color.WHITE
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(24, 40, 24, 24)
+            setBackgroundColor(dark)
+        }
+
+        val title = TextView(this).apply {
+            text = "NusaMusic"
+            textSize = 32f
+            setTextColor(purple)
+            gravity = Gravity.CENTER
+        }
+        layout.addView(title)
+
+        val subtitle = TextView(this).apply {
+            text = "YOUR MUSIC. YOUR VIBE."
+            textSize = 12f
+            setTextColor(white)
+            gravity = Gravity.CENTER
+        }
+        layout.addView(subtitle)
+
+        val heading = TextView(this).apply {
+            text = "Putar musik legal"
+            textSize = 20f
+            setTextColor(white)
+            setPadding(0, 40, 0, 12)
+        }
+        layout.addView(heading)
+
+        val urlInput = EditText(this).apply {
+            hint = "Tempel URL audio berlisensi"
+            setHintTextColor(Color.LTGRAY)
+            setTextColor(white)
+            textSize = 14f
+            setSingleLine(true)
+        }
+
+        layout.addView(
+            urlInput,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        val status = TextView(this).apply {
+            text = "Siap memutar musik"
+            setTextColor(Color.LTGRAY)
+            setPadding(0, 20, 0, 20)
+        }
+        layout.addView(status)
+
+        fun makeButton(label: String): Button {
+            return Button(this).apply {
+                text = label
+                setTextColor(white)
+                backgroundTintList = ColorStateList.valueOf(purple)
+                isAllCaps = false
+            }
+        }
+
+        val playButton = makeButton("▶  Putar musik")
+        layout.addView(playButton)
+
+        val pauseButton = makeButton("Ⅱ  Jeda")
+        layout.addView(pauseButton)
+
+        val stopButton = makeButton("■  Berhenti")
+        layout.addView(stopButton)
+
+        playButton.setOnClickListener {
+            val url = urlInput.text.toString().trim()
+
+            if (!url.startsWith("https://")) {
+                status.text = "Masukkan URL audio HTTPS yang sah."
+                return@setOnClickListener
+            }
+
+            try {
+                if (player == null) {
+                    player = ExoPlayer.Builder(this).build()
+                }
+
+                status.text = "Memuat audio..."
+
+                player?.setMediaItem(
+                    MediaItem.fromUri(Uri.parse(url))
+                )
+                player?.prepare()
+                player?.play()
+
+                status.text = "Audio sedang diputar"
+            } catch (e: Exception) {
+                status.text = "Gagal memuat audio. Periksa URL."
+            }
+        }
+
+        pauseButton.setOnClickListener {
+            player?.pause()
+            status.text = "Musik dijeda"
+        }
+
+        stopButton.setOnClickListener {
+            player?.stop()
+            status.text = "Pemutaran dihentikan"
+        }
+
+        setContentView(layout)
+    }
+
+    override fun onDestroy() {
+        player?.release()
+        player = null
+        super.onDestroy()
+    }
+}
